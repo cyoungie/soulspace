@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { BackButton } from '../components/BackButton';
 import type { JournalEntry } from '../types';
 import './JournalEntryScene.css';
 
@@ -39,6 +40,7 @@ export function JournalEntryScene() {
         '--mood-color': entry.mood.color,
       } as React.CSSProperties}
     >
+      <BackButton />
       <div className="floating-panel">
         <div className="mood-badge">
           <span className="mood-emoji">{entry.mood.emoji}</span>

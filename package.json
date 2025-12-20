@@ -28,6 +28,7 @@
     "@eslint/js": "^9.36.0",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@types/three": "^0.182.0",
     "@vitejs/plugin-react": "^5.0.3",
     "@webspatial/builder": "^1.0.4",
     "@webspatial/platform-visionos": "^1.0.4",

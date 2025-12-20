@@ -19,7 +19,7 @@ export function FeatureSelection() {
 
   return (
     <div className="feature-selection-page">
-      <BackButton onClick={() => navigate('/')} />
+      <BackButton onClick={() => navigate('/open-journal')} />
 
       <div className="feature-content">
         <h2 className="feature-title">Choose Your Journey</h2>

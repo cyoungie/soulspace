@@ -14,6 +14,8 @@ import { VoiceInput } from './components/VoiceInput';
 import { SpatialGallery } from './components/SpatialGallery';
 import { JournalEntryCard } from './components/JournalEntryCard';
 import { JournalEntryScene } from './pages/JournalEntryScene';
+import { OpenJournalPage } from './pages/OpenJournalPage';
+import { TableOfContentsPage } from './pages/TableOfContentsPage';
 import { AIAssistant } from './components/AIAssistant';
 
 function JournalApp() {
@@ -152,6 +154,8 @@ function App() {
     <Router basename={__XR_ENV_BASE__}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/open-journal" element={<OpenJournalPage />} />
+        <Route path="/table-of-contents" element={<TableOfContentsPage />} />
         <Route path="/features" element={<FeatureSelection />} />
         <Route path="/journal" element={<NewJournalEntry />} />
         <Route path="/journal-old" element={<JournalApp />} />
