@@ -19,8 +19,8 @@ export function OpenJournalPage() {
     const bookGroup = new THREE.Group();
     
     // MUST match closed journal dimensions
-    const closedWidth = 2.4;
-    const closedHeight = 3.2;
+    const closedWidth = 3.2;
+    const closedHeight = 4.2;
     
     const pageWidth = closedWidth;
     const pageHeight = closedHeight;
@@ -180,7 +180,7 @@ export function OpenJournalPage() {
       0.1,
       100
     );
-    camera.position.set(0, 0, 7.5);
+    camera.position.set(0, 0, 9.5);
     camera.lookAt(0, 0, 0);
     
     const renderer = new THREE.WebGLRenderer({ 

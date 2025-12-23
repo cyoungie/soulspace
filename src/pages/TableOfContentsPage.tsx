@@ -18,12 +18,12 @@ export function TableOfContentsPage() {
   const createOpenJournal = () => {
     const bookGroup = new THREE.Group();
     
-    const closedWidth = 2.4;
-    const closedHeight = 3.2;
+    const closedWidth = 3.2;
+    const closedHeight = 4.2;
     const pageWidth = closedWidth;
     const pageHeight = closedHeight;
-    const coverThickness = 0.06;
-    const spineWidth = 0.12;
+    const coverThickness = 0.08;
+    const spineWidth = 0.15;
     
     // Pastel colors
     const coverColor = 0xf8c8dc;
@@ -194,7 +194,7 @@ export function TableOfContentsPage() {
       0.1,
       100
     );
-    camera.position.set(0, 0, 7.5);
+    camera.position.set(0, 0, 9.5);
     camera.lookAt(0, 0, 0);
     
     const renderer = new THREE.WebGLRenderer({ 
