@@ -17,6 +17,7 @@ import { JournalEntryScene } from './pages/JournalEntryScene';
 import { OpenJournalPage } from './pages/OpenJournalPage';
 import { TableOfContentsPage } from './pages/TableOfContentsPage';
 import { AIAssistant } from './components/AIAssistant';
+import { VoiceActivationProvider } from './components/VoiceActivationProvider';
 
 function JournalApp() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -152,19 +153,21 @@ function JournalApp() {
 function App() {
   return (
     <Router basename={__XR_ENV_BASE__}>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/open-journal" element={<OpenJournalPage />} />
-        <Route path="/table-of-contents" element={<TableOfContentsPage />} />
-        <Route path="/features" element={<FeatureSelection />} />
-        <Route path="/journal" element={<NewJournalEntry />} />
-        <Route path="/journal-old" element={<JournalApp />} />
-        <Route path="/mood-wrap" element={<MoodWrap />} />
-        <Route path="/emotion-bubble" element={<EmotionBubble />} />
-        <Route path="/emotion-entries/:moodId" element={<EmotionEntriesView />} />
-        <Route path="/second-page" element={<SecondPage />} />
-        <Route path="/entry" element={<JournalEntryScene />} />
-      </Routes>
+      <VoiceActivationProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/open-journal" element={<OpenJournalPage />} />
+          <Route path="/table-of-contents" element={<TableOfContentsPage />} />
+          <Route path="/features" element={<FeatureSelection />} />
+          <Route path="/journal" element={<NewJournalEntry />} />
+          <Route path="/journal-old" element={<JournalApp />} />
+          <Route path="/mood-wrap" element={<MoodWrap />} />
+          <Route path="/emotion-bubble" element={<EmotionBubble />} />
+          <Route path="/emotion-entries/:moodId" element={<EmotionEntriesView />} />
+          <Route path="/second-page" element={<SecondPage />} />
+          <Route path="/entry" element={<JournalEntryScene />} />
+        </Routes>
+      </VoiceActivationProvider>
     </Router>
   )
 }
