@@ -1,17 +1,9 @@
 .mood-wrap-page {
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5e6ff 0%, #e0f2ff 25%, #ffe6f5 50%, #fff0e6 75%, #e6fff5 100%);
-  background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  background: transparent;
   padding: 40px 20px;
   position: relative;
-}
-
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
 }
 
 .mood-wrap-container {
@@ -25,12 +17,12 @@
   top: 80px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
-  font-size: clamp(2.5rem, 6vw, 4rem);
+  z-index: 1000;
+  font-size: clamp(2rem, 5vw, 3rem);
   font-weight: 300;
   letter-spacing: 0.1em;
   text-align: center;
-  margin-bottom: 0;
+  margin: 0;
   background: linear-gradient(
     135deg,
     #ffb6c1 0%,
@@ -44,9 +36,15 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShift 8s ease infinite;
-  filter: drop-shadow(0 2px 10px rgba(255, 182, 193, 0.2));
+  animation: titleGradient 8s ease infinite;
+  filter: drop-shadow(0 2px 10px rgba(255, 182, 193, 0.3));
   pointer-events: none;
+}
+
+@keyframes titleGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Time period tabs */
@@ -60,12 +58,12 @@
 }
 
 .tab-button {
-  padding: 12px 32px;
-  background: rgba(255, 255, 255, 0.7);
+  padding: 10px 28px;
+  background: rgba(255, 255, 255, 0.5);
   border: 2px solid rgba(255, 182, 193, 0.3);
   border-radius: 25px;
   color: rgba(100, 80, 120, 0.8);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 500;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -93,7 +91,7 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: 500px;
+  min-height: 420px;
 }
 
 .panel {
@@ -107,8 +105,8 @@
 .blank-carousel {
   position: relative;
   width: 100%;
-  max-width: 500px;
-  height: 600px;
+  max-width: 420px;
+  height: 480px;
   perspective: 2000px;
   user-select: none;
   -webkit-user-select: none;
@@ -149,9 +147,9 @@
 .blank-card-content {
   width: 100%;
   height: 100%;
-  border-radius: 30px;
+  border-radius: 24px;
   background: transparent;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1);
   overflow: hidden; /* Changed back to hidden to clip to border-radius */
   transform-style: preserve-3d;
   backface-visibility: hidden;
@@ -216,18 +214,24 @@
     padding-top: 40px;
   }
   
+  .mood-wrap-title {
+    top: 70px;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+  
   .time-period-tabs {
-    gap: 10px;
+    gap: 8px;
+    margin-top: 100px;
   }
   
   .tab-button {
-    padding: 10px 20px;
-    font-size: 0.85rem;
+    padding: 8px 16px;
+    font-size: 0.75rem;
   }
   
   .blank-carousel {
     max-width: 100%;
-    height: 500px;
+    height: 400px;
   }
 }
 
