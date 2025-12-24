@@ -295,124 +295,243 @@
   transform: none;
 }
 
-/* WebSpatial support for Vision Pro */
+/* ========================================
+   WebSpatial support for Vision Pro
+   Hide 3D canvas - use styled HTML pages
+   ======================================== */
+
 html.is-spatial .journal-book-page {
   background: transparent;
   --xr-background-material: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Hide the 3D canvas in spatial mode - we'll use styled HTML instead */
+html.is-spatial .journal-canvas-container {
+  display: none !important;
+}
+
+/* The content overlay becomes the actual journal book */
 html.is-spatial .journal-content-overlay {
-  width: 85%;
-  max-width: 900px;
-  height: 70%;
-  max-height: 600px;
-  gap: 20px;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: 700px;
+  height: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  gap: 8px;
+  display: flex;
+  padding: 0;
 }
 
-html.is-spatial .left-page-content,
-html.is-spatial .right-page-content {
-  padding: 20px 30px;
-  background: rgba(255, 253, 248, 0.4);
-  border-radius: 12px;
-  --xr-background-material: translucent;
-}
-
+/* Left Page - AI Prompts (styled as paper) */
 html.is-spatial .left-page-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #fffdf8 0%, #faf6f0 100%);
+  border-radius: 4px 16px 16px 4px;
+  box-shadow: 
+    -3px 0 8px rgba(0, 0, 0, 0.1),
+    inset 2px 0 4px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow-y: auto;
+  --xr-background-material: translucent;
+  --xr-back: 30px;
 }
 
+/* Paper lines effect on left page */
+html.is-spatial .left-page-content::before {
+  content: '';
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 27px,
+    #e8e4dc 27px,
+    #e8e4dc 28px
+  );
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Right Page - Journal Entry (styled as paper) */
 html.is-spatial .right-page-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #faf6f0 0%, #fffdf8 100%);
+  border-radius: 16px 4px 4px 16px;
+  box-shadow: 
+    3px 0 8px rgba(0, 0, 0, 0.1),
+    inset -2px 0 4px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  --xr-background-material: translucent;
+  --xr-back: 30px;
 }
 
+/* Paper lines effect on right page */
+html.is-spatial .right-page-content::before {
+  content: '';
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  right: 20px;
+  bottom: 80px;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 27px,
+    #e8e4dc 27px,
+    #e8e4dc 28px
+  );
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Spine between pages */
+html.is-spatial .journal-content-overlay::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  background: linear-gradient(90deg, 
+    #d4b896 0%, 
+    #c9a882 20%, 
+    #b8936e 50%,
+    #c9a882 80%, 
+    #d4b896 100%
+  );
+  border-radius: 6px;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Title section */
 html.is-spatial .title-section {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
 }
 
 html.is-spatial .journal-title-input {
-  font-size: 1rem;
-  padding: 10px 14px;
+  font-size: 1.1rem;
+  padding: 12px 16px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #d4c8b8;
 }
 
 html.is-spatial .ai-title-btn {
-  font-size: 0.85rem;
-  padding: 10px 16px;
+  font-size: 0.9rem;
+  padding: 12px 18px;
   border-radius: 8px;
 }
 
+/* Prompts section */
 html.is-spatial .prompts-section {
   flex: 1;
   overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 
 html.is-spatial .prompts-section .prompts-title {
-  font-size: 0.9rem !important;
+  font-size: 1rem !important;
+  color: #5a4a3a !important;
 }
 
 html.is-spatial .prompts-section .prompts-icon {
-  font-size: 1rem !important;
+  font-size: 1.1rem !important;
 }
 
 html.is-spatial .prompts-section .prompt-item {
-  padding: 12px 14px !important;
+  padding: 14px 16px !important;
   border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  margin-bottom: 8px;
 }
 
 html.is-spatial .prompts-section .prompt-number {
-  width: 22px !important;
-  height: 22px !important;
-  font-size: 0.7rem !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 0.75rem !important;
 }
 
 html.is-spatial .prompts-section .prompt-text {
-  font-size: 0.8rem !important;
-  line-height: 1.4 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  color: #4a3a2a !important;
 }
 
 html.is-spatial .prompts-section .prompts-toggle {
-  font-size: 0.85rem !important;
-  padding: 6px 10px !important;
+  font-size: 0.9rem !important;
+  padding: 8px 12px !important;
 }
 
 html.is-spatial .prompts-section .refresh-prompts {
-  padding: 10px 14px !important;
-  font-size: 0.75rem !important;
+  padding: 12px 16px !important;
+  font-size: 0.85rem !important;
   border-radius: 8px !important;
 }
 
+/* Date on right page */
 html.is-spatial .page-date {
-  font-size: 1rem;
-  margin-bottom: 12px;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+  color: #6a5a4a;
+  position: relative;
+  z-index: 1;
 }
 
+/* Journal textarea */
 html.is-spatial .journal-textarea {
   flex: 1;
-  font-size: 1rem;
-  padding: 16px;
-  line-height: 1.6;
-  border-radius: 10px;
-  background: rgba(255, 253, 248, 0.6);
+  font-size: 1.1rem;
+  padding: 16px 20px;
+  line-height: 1.8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border: none;
+  color: #3a3a3a;
+  position: relative;
+  z-index: 1;
 }
 
+html.is-spatial .journal-textarea::placeholder {
+  color: rgba(90, 74, 58, 0.5);
+}
+
+/* Action buttons */
 html.is-spatial .action-buttons {
-  gap: 12px;
-  margin-top: 16px;
+  gap: 16px;
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 html.is-spatial .voice-btn,
 html.is-spatial .save-btn {
-  padding: 12px 24px;
-  font-size: 0.9rem;
-  border-radius: 14px;
+  padding: 14px 28px;
+  font-size: 1rem;
+  border-radius: 16px;
+  font-weight: 500;
 }
 
 html.is-spatial .save-btn {
-  min-width: 100px;
+  min-width: 120px;
 }
 
 /* Responsive */
