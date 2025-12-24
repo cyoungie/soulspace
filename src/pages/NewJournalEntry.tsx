@@ -6,29 +6,8 @@ import { JournalPrompts } from '../components/JournalPrompts';
 import { AIFeedback } from '../components/AIFeedback';
 import { detectMood, generateJournalTitle } from '../services/claudeService';
 import { MOODS, type JournalEntry } from '../types';
+import { useVoiceActivationContext } from '../components/VoiceActivationProvider';
 import './NewJournalEntry.css';
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: (event: any) => void;
-  onerror: (event: any) => void;
-  onend: () => void;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-    webkitSpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-  }
-}
 
 export function NewJournalEntry() {
   const navigate = useNavigate();
@@ -38,10 +17,12 @@ export function NewJournalEntry() {
     frameId: number;
   } | null>(null);
   
+  // Get global voice activation context to pause it when using journal voice input
+  const { setEnabled: setGlobalVoiceEnabled } = useVoiceActivationContext();
+  
   const [entryTitle, setEntryTitle] = useState('');
   const [entryText, setEntryText] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
@@ -254,22 +235,98 @@ export function NewJournalEntry() {
     };
   }, []);
 
-  // Initialize speech recognition
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognitionClass();
+  // Track accumulated text for speech recognition
+  const accumulatedTextRef = useRef('');
+  const recognitionRef = useRef<any>(null);
+  const entryTextRef = useRef(entryText);
 
+  // Keep entryTextRef in sync
+  useEffect(() => {
+    entryTextRef.current = entryText;
+  }, [entryText]);
+
+  // Cleanup recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          // Ignore
+        }
+        recognitionRef.current = null;
+      }
+      // Re-enable global voice activation when leaving the page
+      setGlobalVoiceEnabled(true);
+    };
+  }, [setGlobalVoiceEnabled]);
+
+  const toggleListening = async () => {
+    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognitionClass) {
+      alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    if (isListening) {
+      // Stop listening
+      console.log('🛑 Stopping speech recognition...');
+      setIsListening(false);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          // Ignore
+        }
+        recognitionRef.current = null;
+      }
+      // Re-enable global voice activation
+      setGlobalVoiceEnabled(true);
+      console.log('✅ Global voice activation re-enabled');
+    } else {
+      // Disable global voice activation to avoid conflicts
+      setGlobalVoiceEnabled(false);
+      console.log('⏸️ Global voice activation paused');
+      
+      // Wait a moment for the global recognition to stop
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Request microphone permission first
+      try {
+        console.log('🎙️ Requesting microphone permission...');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('✅ Microphone permission granted!');
+        // Stop the stream since we just needed permission
+        stream.getTracks().forEach(track => track.stop());
+      } catch (e) {
+        console.error('❌ Microphone access denied:', e);
+        alert('Could not access microphone. Please allow microphone access and try again.');
+        setGlobalVoiceEnabled(true); // Re-enable on error
+        return;
+      }
+
+      // Initialize accumulated text with current entry text
+      accumulatedTextRef.current = entryTextRef.current ? entryTextRef.current + ' ' : '';
+
+      // Create a fresh recognition instance
+      const recognitionInstance = new SpeechRecognitionClass();
       recognitionInstance.continuous = true;
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = 'en-US';
+
+      recognitionInstance.onstart = () => {
+        console.log('🎤 Journal voice-to-text started!');
+      };
 
       recognitionInstance.onresult = (event: any) => {
         let finalTranscript = '';
         let interimTranscript = '';
 
+        // Process all results
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
+          console.log(`📝 Result ${i}: "${transcript}" (isFinal: ${event.results[i].isFinal})`);
           if (event.results[i].isFinal) {
             finalTranscript += transcript + ' ';
           } else {
@@ -277,35 +334,57 @@ export function NewJournalEntry() {
           }
         }
 
-        const newText = (finalTranscript || interimTranscript).trim();
-        setEntryText(newText);
+        // If we have final text, add it to accumulated text
+        if (finalTranscript) {
+          console.log('✅ Final transcript:', finalTranscript);
+          accumulatedTextRef.current += finalTranscript;
+          setEntryText(accumulatedTextRef.current.trim());
+        } else if (interimTranscript) {
+          // Show interim results (accumulated + current interim)
+          setEntryText((accumulatedTextRef.current + interimTranscript).trim());
+        }
       };
 
       recognitionInstance.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('❌ Speech recognition error:', event.error);
+        // Don't stop on no-speech error, just continue
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
         setIsListening(false);
+          recognitionRef.current = null;
+        }
       };
 
       recognitionInstance.onend = () => {
+        console.log('🔇 Recognition ended, checking if should restart...');
+        // Auto-restart if still supposed to be listening (handles pause mid-sentence)
+        if (recognitionRef.current === recognitionInstance) {
+          console.log('🔄 Restarting recognition...');
+          setTimeout(() => {
+            if (recognitionRef.current === recognitionInstance) {
+              try {
+                recognitionInstance.start();
+              } catch (e) {
+                console.log('Recognition restart failed:', e);
         setIsListening(false);
+                recognitionRef.current = null;
+              }
+            }
+          }, 300);
+        }
       };
 
-      setRecognition(recognitionInstance);
-    }
-  }, []);
-
-  const toggleListening = () => {
-    if (!recognition) {
-      alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
-      return;
-    }
-
-    if (isListening) {
-      recognition.stop();
-      setIsListening(false);
-    } else {
-      recognition.start();
+      recognitionRef.current = recognitionInstance;
       setIsListening(true);
+
+      // Start listening
+      try {
+        recognitionInstance.start();
+        console.log('🎙️ Speech recognition started successfully!');
+      } catch (e) {
+        console.error('Failed to start recognition:', e);
+        setIsListening(false);
+        recognitionRef.current = null;
+      }
     }
   };
 
@@ -411,10 +490,10 @@ export function NewJournalEntry() {
           </div>
           
           <div className="prompts-section">
-            <JournalPrompts 
-              entryCount={entries.length}
-              onSelectPrompt={(prompt) => {
-                setEntryText(prev => prev ? `${prev}\n\n${prompt}\n\n` : `${prompt}\n\n`);
+          <JournalPrompts 
+            entryCount={entries.length}
+            onSelectPrompt={(prompt) => {
+              setEntryText(prev => prev ? `${prev}\n\n${prompt}\n\n` : `${prompt}\n\n`);
               }}
             />
           </div>
@@ -430,13 +509,13 @@ export function NewJournalEntry() {
               year: 'numeric' 
             })}
           </div>
-          <textarea
-            className="journal-textarea"
+            <textarea
+              className="journal-textarea"
             placeholder="Let your thoughts flow..."
-            value={entryText}
-            onChange={(e) => setEntryText(e.target.value)}
-          />
-          
+              value={entryText}
+              onChange={(e) => setEntryText(e.target.value)}
+            />
+
           <div className="action-buttons">
             <button
               className={`voice-btn ${isListening ? 'listening' : ''}`}
@@ -444,7 +523,7 @@ export function NewJournalEntry() {
             >
               {isListening ? '🔴 Stop' : '🎙️ Voice'}
             </button>
-            
+
             <button
               className="save-btn"
               onClick={handleSave}
@@ -453,21 +532,21 @@ export function NewJournalEntry() {
               {isSaving ? '...' : saved ? '✓' : 'Save'}
             </button>
           </div>
+          </div>
         </div>
-      </div>
 
       {/* AI Feedback Modal */}
-      {showFeedback && feedbackEntry && (
-        <AIFeedback
-          entryContent={feedbackEntry.content}
-          detectedMood={feedbackEntry.mood}
-          entryTitle={feedbackEntry.title}
-          onClose={() => {
-            setShowFeedback(false);
-            setFeedbackEntry(null);
-          }}
-        />
-      )}
+        {showFeedback && feedbackEntry && (
+          <AIFeedback
+            entryContent={feedbackEntry.content}
+            detectedMood={feedbackEntry.mood}
+            entryTitle={feedbackEntry.title}
+            onClose={() => {
+              setShowFeedback(false);
+              setFeedbackEntry(null);
+            }}
+          />
+        )}
     </div>
   );
 }

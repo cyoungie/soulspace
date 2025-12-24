@@ -1,18 +1,53 @@
 import { useNavigate } from 'react-router-dom';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
+import { useWebXR } from '../hooks/useWebXR';
 import './LandingPage.css';
 
 export function LandingPage() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const journalRef = useRef<THREE.Group | null>(null);
   const sceneRef = useRef<{
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
     renderer: THREE.WebGLRenderer;
     frameId: number;
   } | null>(null);
   
   const [isReady, setIsReady] = useState(false);
   const [bookHovered, setBookHovered] = useState(false);
+  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
+  
+  // Handle XR select (tap in VR)
+  const handleXRSelect = useCallback((controller: THREE.Object3D) => {
+    if (!sceneRef.current || !journalRef.current) return;
+    
+    // Create raycaster from controller
+    const raycaster = new THREE.Raycaster();
+    const tempMatrix = new THREE.Matrix4();
+    
+    // Get controller's world matrix
+    tempMatrix.identity().extractRotation(controller.matrixWorld);
+    
+    // Set ray from controller position, pointing forward (-Z in controller space)
+    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+    
+    // Check intersection with journal
+    const intersects = raycaster.intersectObject(journalRef.current, true);
+    
+    if (intersects.length > 0) {
+      console.log('Journal tapped in VR!');
+      navigate('/open-journal');
+    }
+  }, [navigate]);
+  
+  // WebXR integration - uses state so hook re-runs when renderer is available
+  const { isSupported: isXRSupported, isSessionActive, enterVR } = useWebXR(
+    renderer,
+    { onSelect: handleXRSelect }
+  );
   
   // Create closed leather journal
   const createClosedJournal = () => {
@@ -167,17 +202,22 @@ export function LandingPage() {
     camera.position.set(0, 0, 6);
     camera.lookAt(0, 0, 0);
     
-    const renderer = new THREE.WebGLRenderer({ 
+    const newRenderer = new THREE.WebGLRenderer({ 
       antialias: true,
       alpha: true 
     });
-    renderer.setClearColor(0x000000, 0);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.5;
-    containerRef.current.appendChild(renderer.domElement);
+    newRenderer.setClearColor(0x000000, 0);
+    newRenderer.setSize(window.innerWidth, window.innerHeight);
+    newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    newRenderer.shadowMap.enabled = true;
+    newRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    newRenderer.toneMappingExposure = 1.5;
+    
+    // Enable WebXR support
+    newRenderer.xr.enabled = true;
+    
+    containerRef.current.appendChild(newRenderer.domElement);
+    setRenderer(newRenderer); // Trigger re-render so useWebXR gets the renderer
     
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -194,6 +234,7 @@ export function LandingPage() {
     // Create journal
     const journal = createClosedJournal();
     scene.add(journal);
+    journalRef.current = journal;
     
     // Load and add logo to journal cover using Image
     const logoImg = new Image();
@@ -228,21 +269,28 @@ export function LandingPage() {
     // Add cache buster to force reload new image
     logoImg.src = `/soulspace-logo.png?v=${Date.now()}`;
     
-    sceneRef.current = { renderer, frameId: 0 };
+    sceneRef.current = { scene, camera, renderer: newRenderer, frameId: 0 };
     
-    // Animation loop
+    // Add XR controllers to scene
+    const controller0 = newRenderer.xr.getController(0);
+    const controller1 = newRenderer.xr.getController(1);
+    scene.add(controller0);
+    scene.add(controller1);
+    
+    // Animation loop - use setAnimationLoop for XR compatibility
     const animate = () => {
       if (!sceneRef.current) return;
-      renderer.render(scene, camera);
-      sceneRef.current.frameId = requestAnimationFrame(animate);
+      newRenderer.render(scene, camera);
     };
-    animate();
+    
+    // Use setAnimationLoop for WebXR compatibility
+    newRenderer.setAnimationLoop(animate);
     
     // Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      newRenderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
     
@@ -296,19 +344,50 @@ export function LandingPage() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchstart', handleTouch);
       if (sceneRef.current) {
-        cancelAnimationFrame(sceneRef.current.frameId);
-        renderer.dispose();
-        containerRef.current?.removeChild(renderer.domElement);
+        newRenderer.setAnimationLoop(null); // Stop XR-compatible animation loop
+        scene.remove(controller0);
+        scene.remove(controller1);
+        newRenderer.dispose();
+        setRenderer(null);
+        journalRef.current = null;
+        containerRef.current?.removeChild(newRenderer.domElement);
       }
     };
   }, [navigate]);
   
+  // Handle Enter VR button click
+  const handleEnterVR = useCallback(async () => {
+    const success = await enterVR();
+    if (success) {
+      console.log('Successfully entered VR mode');
+    }
+  }, [enterVR]);
+
   return (
     <div className={`landing-page ${bookHovered ? 'book-hover' : ''}`}>
       <div ref={containerRef} className="three-container" />
       
+      {/* WebXR Enter VR Button */}
+      {isXRSupported && !isSessionActive && isReady && (
+        <button 
+          className="enter-vr-button"
+          onClick={handleEnterVR}
+          aria-label="Enter VR Mode"
+        >
+          <span className="vr-icon">🥽</span>
+          <span className="vr-text">Enter VR</span>
+        </button>
+      )}
+      
+      {/* VR Active Indicator */}
+      {isSessionActive && (
+        <div className="vr-active-indicator">
+          <span>🥽 VR Mode Active</span>
+        </div>
+      )}
+      
       {/* Hint text */}
-      {isReady && (
+      {isReady && !isSessionActive && (
         <div className="tap-hint">
           <span className={bookHovered ? 'hovered' : ''}>
             {bookHovered ? 'click to open' : 'tap the journal'}

@@ -1,18 +1,47 @@
 import { useNavigate } from 'react-router-dom';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { BackButton } from '../components/BackButton';
+import { useWebXR } from '../hooks/useWebXR';
 import './OpenJournalPage.css';
 
 export function OpenJournalPage() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const rightPageRef = useRef<THREE.Mesh | null>(null);
   const sceneRef = useRef<{
+    scene: THREE.Scene;
     renderer: THREE.WebGLRenderer;
     frameId: number;
     startButton: THREE.Mesh;
     camera: THREE.PerspectiveCamera;
   } | null>(null);
+  const [renderer, setRenderer] = useState<THREE.WebGLRenderer | null>(null);
+  
+  // Handle XR select (tap in VR)
+  const handleXRSelect = useCallback((controller: THREE.Object3D) => {
+    if (!sceneRef.current || !rightPageRef.current) return;
+    
+    const raycaster = new THREE.Raycaster();
+    const tempMatrix = new THREE.Matrix4();
+    
+    tempMatrix.identity().extractRotation(controller.matrixWorld);
+    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+    
+    const intersects = raycaster.intersectObject(rightPageRef.current);
+    
+    if (intersects.length > 0) {
+      const uv = intersects[0].uv;
+      if (uv && uv.x > 0.25 && uv.x < 0.75 && uv.y > 0.4 && uv.y < 0.6) {
+        console.log('Start button tapped in VR!');
+        navigate('/table-of-contents');
+      }
+    }
+  }, [navigate]);
+  
+  // WebXR integration
+  useWebXR(renderer, { onSelect: handleXRSelect });
   
   // Create already-opened journal with content ON the pages
   const createOpenJournal = () => {
@@ -183,17 +212,19 @@ export function OpenJournalPage() {
     camera.position.set(0, 0, 9.5);
     camera.lookAt(0, 0, 0);
     
-    const renderer = new THREE.WebGLRenderer({ 
+    const newRenderer = new THREE.WebGLRenderer({ 
       antialias: true,
       alpha: true 
     });
-    renderer.setClearColor(0x000000, 0);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.5;
-    containerRef.current.appendChild(renderer.domElement);
+    newRenderer.setClearColor(0x000000, 0);
+    newRenderer.setSize(window.innerWidth, window.innerHeight);
+    newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    newRenderer.shadowMap.enabled = true;
+    newRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    newRenderer.toneMappingExposure = 1.5;
+    newRenderer.xr.enabled = true; // Enable XR
+    containerRef.current.appendChild(newRenderer.domElement);
+    setRenderer(newRenderer);
     
     // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
@@ -211,22 +242,26 @@ export function OpenJournalPage() {
     const { bookGroup, rightPage } = createOpenJournal();
     bookGroup.position.set(0, 0, 0);
     scene.add(bookGroup);
+    rightPageRef.current = rightPage;
     
-    sceneRef.current = { renderer, frameId: 0, startButton: rightPage, camera };
+    // Add XR controllers to scene
+    const controller0 = newRenderer.xr.getController(0);
+    const controller1 = newRenderer.xr.getController(1);
+    scene.add(controller0);
+    scene.add(controller1);
     
-    renderer.render(scene, camera);
+    sceneRef.current = { scene, renderer: newRenderer, frameId: 0, startButton: rightPage, camera };
     
-    const animate = () => {
+    // Use setAnimationLoop for WebXR compatibility
+    newRenderer.setAnimationLoop(() => {
       if (!sceneRef.current) return;
-      renderer.render(scene, camera);
-      sceneRef.current.frameId = requestAnimationFrame(animate);
-    };
-    animate();
+      newRenderer.render(scene, camera);
+    });
     
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      newRenderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
     
@@ -281,9 +316,13 @@ export function OpenJournalPage() {
       window.removeEventListener('click', handleClick);
       window.removeEventListener('touchstart', handleTouch);
       if (sceneRef.current) {
-        cancelAnimationFrame(sceneRef.current.frameId);
-        renderer.dispose();
-        containerRef.current?.removeChild(renderer.domElement);
+        newRenderer.setAnimationLoop(null);
+        scene.remove(controller0);
+        scene.remove(controller1);
+        newRenderer.dispose();
+        setRenderer(null);
+        rightPageRef.current = null;
+        containerRef.current?.removeChild(newRenderer.domElement);
       }
     };
   }, [navigate]);

@@ -1,13 +1,13 @@
 .mood-wrap-carousel {
   position: relative;
   width: 100%;
-  max-width: 800px;
+  max-width: 480px;
   margin: 0 auto;
   perspective: 2000px;
-  height: 700px;
+  height: 520px;
   user-select: none;
   -webkit-user-select: none;
-  padding-bottom: 120px; /* Space for buttons */
+  padding-bottom: 100px; /* Space for buttons */
   overflow: visible; /* Allow buttons to be visible */
 }
 
@@ -60,12 +60,12 @@
 .card-content {
   width: 100%;
   height: 100%;
-  border-radius: 30px;
+  border-radius: 24px;
   /* Simple solid pastel background - no gradient animation for blank cards */
   background: rgba(255, 182, 193, 0.7);
   backdrop-filter: blur(15px);
   box-shadow:
-    0 20px 60px rgba(255, 182, 193, 0.3);
+    0 15px 45px rgba(255, 182, 193, 0.3);
   overflow: hidden;
   overflow-y: auto;
   transform-style: preserve-3d;
