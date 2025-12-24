@@ -295,10 +295,124 @@
   transform: none;
 }
 
-/* WebSpatial support */
+/* WebSpatial support for Vision Pro */
 html.is-spatial .journal-book-page {
   background: transparent;
   --xr-background-material: transparent;
+}
+
+html.is-spatial .journal-content-overlay {
+  width: 85%;
+  max-width: 900px;
+  height: 70%;
+  max-height: 600px;
+  gap: 20px;
+}
+
+html.is-spatial .left-page-content,
+html.is-spatial .right-page-content {
+  padding: 20px 30px;
+  background: rgba(255, 253, 248, 0.4);
+  border-radius: 12px;
+  --xr-background-material: translucent;
+}
+
+html.is-spatial .left-page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+html.is-spatial .right-page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+html.is-spatial .title-section {
+  margin-bottom: 12px;
+}
+
+html.is-spatial .journal-title-input {
+  font-size: 1rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+html.is-spatial .ai-title-btn {
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+html.is-spatial .prompts-section {
+  flex: 1;
+  overflow-y: auto;
+}
+
+html.is-spatial .prompts-section .prompts-title {
+  font-size: 0.9rem !important;
+}
+
+html.is-spatial .prompts-section .prompts-icon {
+  font-size: 1rem !important;
+}
+
+html.is-spatial .prompts-section .prompt-item {
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+}
+
+html.is-spatial .prompts-section .prompt-number {
+  width: 22px !important;
+  height: 22px !important;
+  font-size: 0.7rem !important;
+}
+
+html.is-spatial .prompts-section .prompt-text {
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+}
+
+html.is-spatial .prompts-section .prompts-toggle {
+  font-size: 0.85rem !important;
+  padding: 6px 10px !important;
+}
+
+html.is-spatial .prompts-section .refresh-prompts {
+  padding: 10px 14px !important;
+  font-size: 0.75rem !important;
+  border-radius: 8px !important;
+}
+
+html.is-spatial .page-date {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+html.is-spatial .journal-textarea {
+  flex: 1;
+  font-size: 1rem;
+  padding: 16px;
+  line-height: 1.6;
+  border-radius: 10px;
+  background: rgba(255, 253, 248, 0.6);
+}
+
+html.is-spatial .action-buttons {
+  gap: 12px;
+  margin-top: 16px;
+}
+
+html.is-spatial .voice-btn,
+html.is-spatial .save-btn {
+  padding: 12px 24px;
+  font-size: 0.9rem;
+  border-radius: 14px;
+}
+
+html.is-spatial .save-btn {
+  min-width: 100px;
 }
 
 /* Responsive */
