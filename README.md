@@ -1,3 +1,6 @@
+# Project Deep Dive
+https://smiling-cap-7e6.notion.site/SoulSpace-Making-Emotions-Tangible-in-Mixed-Reality-2dfdf2206e458019a436fdf11efef820
+
 # HealthXR - Mental Health Journal for Vision Pro
 
 
