@@ -5,7 +5,6 @@ https://smiling-cap-7e6.notion.site/SoulSpace-Making-Emotions-Tangible-in-Mixed-
 
 
 A spatial mental health journaling app built with React and WebSpatial for Apple Vision Pro.
-https://smiling-cap-7e6.notion.site/SoulSpace-Making-Emotions-Tangible-in-Mixed-Reality-2dfdf2206e458019a436fdf11efef820 
 
 
 ## What It Does
